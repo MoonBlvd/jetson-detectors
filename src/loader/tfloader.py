@@ -16,7 +16,7 @@ def load_model(model_name):
         checkpoint=checkpoint_path
     )
 
-    print(f'Input names: {input_names}')
-    print(f'Output names: {output_names}')
+    print('Input names: {}'.format(input_names))
+    print('Output names: {}'.format(output_names))
 
     return tr_graph

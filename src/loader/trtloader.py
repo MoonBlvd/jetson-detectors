@@ -6,15 +6,17 @@ import tensorflow as tf
 
 def load_model(model_name):
     
-    trt_output_file = f'./models/{model_name}_trt.pb'
+    trt_output_file = './models/{}_trt.pb'.format(model_name)
 
-    trt_graph = tf.compat.v1.GraphDef()
+    # trt_graph = tf.compat.v1.GraphDef()
+    trt_graph = tf.GraphDef()
 
     if os.path.exists(trt_output_file):
-        print(f'Loading model {trt_output_file}...')
-        with tf.io.gfile.GFile(trt_output_file, 'rb') as f:
+        print('Loading model {}...'.format(trt_output_file))
+        # with tf.io.gfile.GFile(trt_output_file, 'rb') as f:
+        with tf.gfile.GFile(trt_output_file, 'rb') as f:
             trt_graph.ParseFromString(f.read())
-            print(f'{trt_output_file} loaded.')
+            print('{} loaded.'.format(trt_output_file))
     else:
         # Lazy load these dependencies
         import sys
@@ -30,7 +32,7 @@ def load_model(model_name):
             checkpoint=checkpoint_path
         )
 
-        print(f'Converting {model_name} to trt..')
+        print('Converting {} to trt..'.format(model_name))
         trt_graph = trt.create_inference_graph(
             input_graph_def=frozen_graph,
             outputs=output_names,
@@ -41,6 +43,6 @@ def load_model(model_name):
         )
         with open(trt_output_file, 'wb') as f:
             f.write(trt_graph.SerializeToString())
-            print(f'{trt_output_file} saved.')
+            print('{} saved.'.format(trt_output_file    ))
 
     return trt_graph

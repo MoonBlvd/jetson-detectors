@@ -7,7 +7,7 @@ import time
 import click
 
 import tensorflow as tf
-import cv2 as cv
+import cv2
 import numpy as np
 
 
@@ -38,7 +38,15 @@ def detector(model_name, camera_id, trt_optimize):
     tf_classes = tf_sess.graph.get_tensor_by_name('detection_classes:0')
     tf_num_detections = tf_sess.graph.get_tensor_by_name('num_detections:0')
 
-    video_capture = cv.VideoCapture(camera_id)
+    # video_capture = cv2.VideoCapture(camera_id)
+    video_capture = cv2.VideoCapture("nvcamerasrc ! \
+                                      video/x-raw(memory:NVMM), \
+                                      width=(int)640, height=(int)480, \
+                                      format=(string)I420, framerate=(fraction)30/1 \
+                                      ! nvvidconv ! video/x-raw, format=(string)BGRx \
+                                      ! videoconvert ! video/x-raw, format=(string)BGR \
+                                      ! appsink")
+    
     video_capture_result, frame = video_capture.read()
     camera_height, camera_width, channels = frame.shape
 
@@ -50,10 +58,10 @@ def detector(model_name, camera_id, trt_optimize):
 
         if video_capture_result == False:
             raise ValueError(
-                f'Error reading the frame from camera {camera_id}')
+                'Error reading the frame from camera {camera_id}')
 
         # face detection and other logic goes here
-        image_resized = cv.resize(frame, (300, 300))
+        image_resized = cv2.resize(frame, (300, 300))
 
         scores, boxes, classes, num_detections = tf_sess.run(
             [tf_scores, tf_boxes, tf_classes, tf_num_detections],
@@ -69,21 +77,21 @@ def detector(model_name, camera_id, trt_optimize):
                                        camera_width, camera_height, camera_width])
             box = box.astype(int)
 
-            cv.rectangle(frame, (box[1], box[0]), (box[3],
+            cv2.rectangle(frame, (box[1], box[0]), (box[3],
                                                    box[2]), color=(0, 255, 0), thickness=1)
-            text = f"{scores[i]*100:.0f} | {str(int(classes[i]))}"
-            cv.putText(frame, text, (box[3]+10, box[2]),
-                       cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+            text = "{:.0f} | {}".format(scores[i]*100, str(int(classes[i])))
+            cv2.putText(frame, text, (box[3]+10, box[2]),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
-        cv.putText(frame, f"FPS:{ 1.0 / (time.time() - start_time):0.1f}",
-                   (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+        cv2.putText(frame, "FPS:{:0.1f}".format(1.0 / (time.time() - start_time)),
+               (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         start_time = time.time()
 
-        cv.imshow('Input', frame)
-        if cv.waitKey(1) == 27:
+        cv2.imshow('Input', frame)
+        if cv2.waitKey(1) == 27:
             break
 
-    cv.destroyAllWindows()
+    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
